@@ -2,22 +2,38 @@
 #include <Windows.h>
 #include <conio.h>
 #include "SymStats.h"
+#include <assert.h>
 
 /*
 Read symbols from file. At each step, replace the last read symbol with one that costs more bits
 Chances are that each symbol will appear the same amount of time. If we keep updating our symbol library, there is a chance that high cost symbols will cost less
 */
 
-#define Cube_Rows 16
-#define Cube_Colls 16
-#define CubeCordToIndex(x,y) (y * Cube_Colls + x)
-#define SymbolBitCount 8
-#define SymbolByteCount 1
+#define Cube_Rows 256
+#define Cube_Colls 256
+#define SymbolBitCount 16
+#define SymbolByteCount (SymbolBitCount/8)
+#define CubeSizeMemoryBytes (sizeof(unsigned short) * (Cube_Rows + 2) * (Cube_Colls + 2))
+
+int CubeCordToIndex(int x, int y)
+{
+    if (y >= Cube_Rows || y < -1)
+    {
+        printf("Invalid row value : %d\n", y);
+        return 0;
+    }
+    if (x >= Cube_Colls || x < -1)
+    {
+        printf("Invalid column value : %d\n", x);
+        return 0;
+    }
+    return (y * Cube_Colls + x);
+}
 
 void InitRubicCube(unsigned short* Cube)
 {
 	unsigned short* Cube_ = &Cube[CubeCordToIndex(-1, -1)];
-	memset(Cube_, 0xFFFFFFFF, sizeof(unsigned short) * (Cube_Rows + 2) * (Cube_Colls + 2));
+    memset(Cube_, 0, CubeSizeMemoryBytes);
 	for (int y = 0; y < Cube_Rows; y++)
 		for (int x = 0; x < Cube_Colls; x++)
 			Cube[CubeCordToIndex(x, y)] = CubeCordToIndex(x, y);
@@ -36,13 +52,16 @@ int GetBitCost(int Symbol)
 
 void EvolveCube(unsigned short* Cube, int atx, int aty)
 {
-	int WorstX, WorstY;
-	int WorstCost = -1;
-	for (int y = aty - 1; y < aty + 1; y++)
+	int WorstX = -1, WorstY = -1;
+#define DefaultCostValue -1
+    int WorstCost = DefaultCostValue;
+    assert(atx >= 0 && atx < Cube_Colls);
+    assert(aty >= 0 && aty < Cube_Rows);
+    for (int y = aty - 1; y < aty + 1; y++)
 		for (int x = atx - 1; x < atx + 1; x++)
 		{
 			int CostNow = GetBitCost(Cube[CubeCordToIndex(x, y)]);
-			if (CostNow > WorstCost)
+            if (CostNow > WorstCost)
 			{
 				WorstCost = CostNow;
 				WorstX = x;
@@ -50,7 +69,7 @@ void EvolveCube(unsigned short* Cube, int atx, int aty)
 			}
 		}
 	//swap current cost with worst cost. Should have a smaller chance to trigger than the one we use now
-	if (WorstCost != -1)
+    if (WorstCost != DefaultCostValue)
 	{
 		unsigned short OldValue = Cube[CubeCordToIndex(atx, aty)];
 		unsigned short NewValue = Cube[CubeCordToIndex(WorstX, WorstY)];
@@ -61,15 +80,36 @@ void EvolveCube(unsigned short* Cube, int atx, int aty)
 
 void SplitSymbolToXY(unsigned char* ReadBuff, int* x, int* y)
 {
-	*x = (ReadBuff[0]) & 0x0F;
+#if (SymbolBitCount==8)
+    *x = ((int)ReadBuff[0] >> 0) & 0x0F;
 	*y = ((int)ReadBuff[0] >> 4) & 0x0F;
+#endif
+#if (SymbolBitCount==16)
+    *x = ReadBuff[0];
+    *y = ReadBuff[1];
+#endif
 }
-/*
-void AssambleSymbolToXY(unsigned char* ReadBuff, int* x, int* y)
+
+void CheckCubeIntegrity(unsigned short* Cube)
 {
-	ReadBuff[0] = *x & 0x0F;
-	ReadBuff[0] |= (*y & 0x0F) << 4;
-}*/
+    int CubeSizeBytes = CubeSizeMemoryBytes;
+    unsigned short *Cube_ = (unsigned short*)malloc(CubeSizeBytes+10);
+    memset(Cube_, 0, CubeSizeBytes);
+    for (int y = 0; y < Cube_Rows; y++)
+        for (int x = 0; x < Cube_Colls; x++)
+        {
+            unsigned short CubeVal = Cube[CubeCordToIndex(x, y)];
+            if (CubeVal >= (1 << SymbolBitCount))
+                printf("Cube Integrity check failed 1\n");
+            else 
+                Cube_[CubeVal]++;
+        }
+    int LargestSymbol = (1 << SymbolBitCount);
+    for (int i = 0; i < LargestSymbol; i++)
+        if (Cube_[i] != 1)
+            printf("Cube Integrity check failed 1 : Value for symbol %d is %d instead 1\n", i, Cube_[i]);
+    free(Cube_);
+}
 
 void ProcessFile_Rubic(const char* Input, const char* Output, int InitialSkips = 0, int SkipCount = 0)
 {
@@ -88,8 +128,13 @@ void ProcessFile_Rubic(const char* Input, const char* Output, int InitialSkips =
 			break;
 		SplitSymbolToXY(ReadBuff, &x, &y);
 		int OldValue = Cube[CubeCordToIndex(x, y)];
-		EvolveCube(Cube, x, y);
 		fwrite(&OldValue, 1, SymbolByteCount, outf);
+        //roll the dice for a better world
+        EvolveCube(Cube, x, y);
+        //we always mess up. Detect and fix as soon as possible
+#if (SymbolBitCount==8)
+        CheckCubeIntegrity(Cube);
+#endif
 	} while (1);
 	fclose(inf);
 	fclose(outf);
