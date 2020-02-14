@@ -5309,6 +5309,7 @@ void bitreader_convert_next_block_runlength_stat_( bitreader &br )
 }
 
 void DoBiaryTest(); 
+void DoRubicTest();
 //the idea is to eighter flip symbols at specific positions or flip at specific ranges 
 //in order for this to have a gain we need to have symbol X to be present more then symbol Y
 //and find a rule at which symbol Y is found more then symbol X. Making the flips would increase the ocurance of X in overall
@@ -5316,6 +5317,7 @@ void main()
 {
 //	DoBiaryTest();
 //	DoAryTest();
+	DoRubicTest();
 	printf("Generate symbolocurance statistics\n");
 	printf("Zip works on 24 bits!\n");
 
