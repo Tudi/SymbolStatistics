@@ -41,3 +41,4 @@ int GetFileSize(FILE *fp);
 void bitreader_open(bitreader &br, const char *infilename, int SymbolBitCount);
 void bitreader_close(bitreader &br);
 __int64 Count1s(unsigned __int64 Symbol);
+int GetBitFromBuff(unsigned char* buff, int BitIndex);

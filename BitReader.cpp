@@ -136,3 +136,13 @@ __int64 Count1s(unsigned __int64 Symbol)
 			Count++;
 	return Count;
 }
+
+//did not test it yet
+int GetBitFromBuff(unsigned char* buff, int BitIndex)
+{
+	unsigned char* buff2 = buff + BitIndex / 8;
+	int BitIndex2 = BitIndex % 8;
+	int ret = buff2[0];
+	ret = ret >> BitIndex2;
+	return ret & 1;
+}

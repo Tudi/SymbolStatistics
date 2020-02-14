@@ -6,7 +6,7 @@
 #include <assert.h>
 #include "BitReader.h"
 #include "HuffmanTree.h"
-#include "AriEnc.h"
+//#include "AriEnc.h"
 
 /******************************************
 / count all possible simbols with len 4-8
@@ -41,8 +41,6 @@ int GetOutArchivedSize( bitreader &br )
 
 	return Size;
 }
-
-
 
 void PrintStatistics( bitreader &br )
 {
@@ -5317,7 +5315,7 @@ void DoBiaryTest();
 void main()
 {
 //	DoBiaryTest();
-	DoAryTest();
+//	DoAryTest();
 	printf("Generate symbolocurance statistics\n");
 	printf("Zip works on 24 bits!\n");
 
