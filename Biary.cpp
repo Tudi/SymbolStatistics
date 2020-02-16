@@ -49,7 +49,7 @@ void ProcessFile(const char *Input, const char *Output, int InitialSkips = 0, in
 	BitwriterStore bw;
 	BiaryStore bs;
 	bitreader_open(br, Input, 1);
-	printf("Input File size %d MB = %d\n", br.FileSize / 1024 / 1024, br.FileSize);
+    printf("Input File size %d MB = %d B for %s\n", br.FileSize / 1024 / 1024, br.FileSize, Input);
 	//init bit writer
 	InitBitwriter(&bw, br.FileSize + 8);
 	//start reading the input and meantime process it
@@ -107,28 +107,71 @@ void ProcessFile(const char *Input, const char *Output, int InitialSkips = 0, in
 		}
 	} while (br.readcount);
 	//we are done processing input
-	//dump the output buffer into a file
-	DumptToFile(&bw, Output);
-
-	bitreader_close(br);
+    bitreader_close(br);
+    //dump the output buffer into a file
+    DumptToFile(&bw, Output);
+    //free memory as we tend to run low on it :P
+    BitwriterFree(&bw);
 }
 
 void DoBiaryTest()
 {
-	PrintStatisticsf("data.rar", 2);
-	ProcessFile("data.rar", "out.dat");
-//	for(int i=0;i<10;i++)
-//		ProcessFile("out.dat", "out.dat");
-	ProcessFile("out.dat", "out.dat", 0, 1);
-	PrintStatisticsf("out.dat", 2);
-	ProcessFile("out.dat", "out.dat", 1, 1);
-	PrintStatisticsf("out.dat", 2);
-	ProcessFile("out.dat", "out.dat", 0, 2);
-	PrintStatisticsf("out.dat", 2);
-	ProcessFile("out.dat", "out.dat", 1, 2);
-	PrintStatisticsf("out.dat", 2);
-	ProcessFile("out.dat", "out.dat", 2, 2);
-	PrintStatisticsf("out.dat", 2);
+	PrintStatisticsf("data.rar", 1);
+	ProcessFile("data.rar", "out.dat2");
+	for(int i=0;i<10;i++)
+		ProcessFile("out.dat2", "out.dat2", i & 1);
+/*    PrintStatisticsf("out.dat2", 1);
+	ProcessFile("out.dat2", "out.dat3");
+	PrintStatisticsf("out.dat3", 1);
+	ProcessFile("out.dat3", "out.dat4");
+	PrintStatisticsf("out.dat4", 1);
+	ProcessFile("out.dat4", "out.dat5");
+	PrintStatisticsf("out.dat5", 1);
+	ProcessFile("out.dat5", "out.dat6");
+	PrintStatisticsf("out.dat6", 1);*/
 	_getch();
 	exit(0);
+
+    /*
+    count 0   : 1339439
+    count 1   : 1398345
+    Sum        : 2737784
+    pct 0 / 1 : 0.957874 1.043978
+    pct 0 / 1 : 0.489242 0.510758
+    Input File size 0 MB = 342224 for data.rar
+    Started with 1398345 ones, ended with 1339433 ones, Diff 58912, diff 1.04
+    count 0   : 1398351
+    count 1   : 1339433
+    Sum        : 2737784
+    pct 0 / 1 : 1.043987 0.957866
+    pct 0 / 1 : 0.510760 0.489240
+    Input File size 0 MB = 342224 for out.dat2
+    Started with 1339433 ones, ended with 1339433 ones, Diff 0, diff 1.000000
+    count 0   : 1398351
+    count 1   : 1339433
+    Sum        : 2737784
+    pct 0 / 1 : 1.043987 0.957866
+    pct 0 / 1 : 0.510760 0.489240
+    Input File size 0 MB = 342224 for out.dat3
+    Started with 1339433 ones, ended with 1339433 ones, Diff 0, diff 1.000000
+    count 0   : 1398351
+    count 1   : 1339433
+    Sum        : 2737784
+    pct 0 / 1 : 1.043987 0.957866
+    pct 0 / 1 : 0.510760 0.489240
+    Input File size 0 MB = 342224 for out.dat4
+    Started with 1339433 ones, ended with 1339433 ones, Diff 0, diff 1.000000
+    count 0   : 1398351
+    count 1   : 1339433
+    Sum        : 2737784
+    pct 0 / 1 : 1.043987 0.957866
+    pct 0 / 1 : 0.510760 0.489240
+    Input File size 0 MB = 342224 for out.dat5
+    Started with 1339433 ones, ended with 1339433 ones, Diff 0, diff 1.000000
+    count 0   : 1398351
+    count 1   : 1339433
+    Sum        : 2737784
+    pct 0 / 1 : 1.043987 0.957866
+    pct 0 / 1 : 0.510760 0.489240
+    */
 }
