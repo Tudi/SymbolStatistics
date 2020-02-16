@@ -7,10 +7,11 @@
 
 void InitBiary(BiaryStore *bs, int Ones, int Zeros)
 {
-	bs->ReadCount1 = Ones;
-	bs->ReadCount0 = Zeros;
-	bs->WrittenCount1 = 0;
-	bs->WrittenCount0 = 0;
+	bs->Count1Total = Ones;
+	bs->Count0Total = Zeros;
+	bs->Count1Current = 0;
+	bs->Count0Current = 0;
+    bs->WrittenCountPattern = 0;
 }
 
 void WriteHeaderToFile(FILE *out, BiaryStore *bs)
@@ -21,15 +22,22 @@ void WriteHeaderToFile(FILE *out, BiaryStore *bs)
 int GuessNextSymbol(BiaryStore *bs, int InputSymbol)
 {
 	int ret;
-//	if (bs->ReadCount1 * bs->WrittenCount0 >= bs->ReadCount0 * bs->WrittenCount1)
-	if (bs->ReadCount1 - bs->WrittenCount1 <= bs->ReadCount0 - bs->WrittenCount0)
+    int WrittenCount = bs->Count1Current + bs->Count0Current;
+    //the output is 01010101, but specific points, extra 1 is going to get inserted
+    int PrevSymbol = (WrittenCount - 1) * (bs->Count1Total - bs->Count1Current) / (bs->Count0Total - bs->Count0Current + 1);
+    int NextSymbol = WrittenCount * (bs->Count1Total - bs->Count1Current) / (bs->Count0Total - bs->Count0Current + 1);
+    if (PrevSymbol == NextSymbol)
 		ret = 1;
-	else
-		ret = 0;
+    else
+    {
+        static const unsigned char OuputPattern[2] = { 0, 1 };
+        ret = OuputPattern[bs->WrittenCountPattern % 2];
+        bs->WrittenCountPattern++;
+    }
 	if(InputSymbol == 1)
-		bs->WrittenCount1++;
+		bs->Count1Current++;
 	else
-		bs->WrittenCount0++;
+		bs->Count0Current++;
 	return ret;
 }
 
@@ -117,18 +125,11 @@ void ProcessFile(const char *Input, const char *Output, int InitialSkips = 0, in
 void DoBiaryTest()
 {
 	PrintStatisticsf("data.rar", 1);
-	ProcessFile("data.rar", "out.dat2");
-	for(int i=0;i<10;i++)
-		ProcessFile("out.dat2", "out.dat2", i & 1);
-/*    PrintStatisticsf("out.dat2", 1);
-	ProcessFile("out.dat2", "out.dat3");
-	PrintStatisticsf("out.dat3", 1);
-	ProcessFile("out.dat3", "out.dat4");
-	PrintStatisticsf("out.dat4", 1);
-	ProcessFile("out.dat4", "out.dat5");
-	PrintStatisticsf("out.dat5", 1);
-	ProcessFile("out.dat5", "out.dat6");
-	PrintStatisticsf("out.dat6", 1);*/
+    for (int i = 0; i < 3; i++)
+    {
+        ProcessFile("out.dat2", "out.dat2", i & 1);
+        PrintStatisticsf("out.dat2", 1);
+    }
 	_getch();
 	exit(0);
 
@@ -138,40 +139,26 @@ void DoBiaryTest()
     Sum        : 2737784
     pct 0 / 1 : 0.957874 1.043978
     pct 0 / 1 : 0.489242 0.510758
-    Input File size 0 MB = 342224 for data.rar
-    Started with 1398345 ones, ended with 1339433 ones, Diff 58912, diff 1.04
-    count 0   : 1398351
-    count 1   : 1339433
-    Sum        : 2737784
-    pct 0 / 1 : 1.043987 0.957866
-    pct 0 / 1 : 0.510760 0.489240
-    Input File size 0 MB = 342224 for out.dat2
-    Started with 1339433 ones, ended with 1339433 ones, Diff 0, diff 1.000000
-    count 0   : 1398351
-    count 1   : 1339433
-    Sum        : 2737784
-    pct 0 / 1 : 1.043987 0.957866
-    pct 0 / 1 : 0.510760 0.489240
-    Input File size 0 MB = 342224 for out.dat3
-    Started with 1339433 ones, ended with 1339433 ones, Diff 0, diff 1.000000
-    count 0   : 1398351
-    count 1   : 1339433
-    Sum        : 2737784
-    pct 0 / 1 : 1.043987 0.957866
-    pct 0 / 1 : 0.510760 0.489240
-    Input File size 0 MB = 342224 for out.dat4
-    Started with 1339433 ones, ended with 1339433 ones, Diff 0, diff 1.000000
-    count 0   : 1398351
-    count 1   : 1339433
-    Sum        : 2737784
-    pct 0 / 1 : 1.043987 0.957866
-    pct 0 / 1 : 0.510760 0.489240
-    Input File size 0 MB = 342224 for out.dat5
-    Started with 1339433 ones, ended with 1339433 ones, Diff 0, diff 1.000000
-    count 0   : 1398351
-    count 1   : 1339433
-    Sum        : 2737784
-    pct 0 / 1 : 1.043987 0.957866
-    pct 0 / 1 : 0.510760 0.489240
+    Input File size 0 MB = 342196 B for out.dat2
+    Started with 1369373 ones, ended with 1368497 ones, Diff 876, diff 1.000640
+    count 0   : 1369067
+    count 1   : 1368493
+    Sum        : 2737560
+    pct 0 / 1 : 1.000419 0.999581
+    pct 0 / 1 : 0.500105 0.499895
+    Input File size 0 MB = 342196 B for out.dat2
+    Started with 1368497 ones, ended with 1367992 ones, Diff 505, diff 1.000369
+    count 0   : 1369568
+    count 1   : 1367984
+    Sum        : 2737552
+    pct 0 / 1 : 1.001158 0.998843
+    pct 0 / 1 : 0.500289 0.499711
+    Input File size 0 MB = 342195 B for out.dat2
+    Started with 1367987 ones, ended with 1368479 ones, Diff -492, diff 0.999640
+    count 0   : 1369075
+    count 1   : 1368477
+    Sum        : 2737552
+    pct 0 / 1 : 1.000437 0.999563
+    pct 0 / 1 : 0.500109 0.499891
     */
 }

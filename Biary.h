@@ -4,11 +4,12 @@
 struct BiaryStore
 {
 	//number of symbols we will have at the end
-	int ReadCount1;
-	int ReadCount0;
+	int Count1Total;
+	int Count0Total;
 	//number of symbols we guessed so far
-	int WrittenCount1;
-	int WrittenCount0;
+	int Count1Current;
+	int Count0Current;
+    int WrittenCountPattern;
 };
 
 void InitBiary(BiaryStore *bs, int Ones, int Zeros);
